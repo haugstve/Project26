@@ -7,6 +7,7 @@
 //
 
 import SpriteKit
+import CoreMotion
 
 enum CollisionTypes: UInt32 {
     case Player = 1
@@ -20,6 +21,8 @@ class GameScene: SKScene {
     
     var player: SKSpriteNode!
     var lastTouchPostition: CGPoint?
+    var motionManger: CMMotionManager!
+    
     
     override func didMoveToView(view: SKView) {
         let background = SKSpriteNode(imageNamed: "background.jpg")
@@ -32,6 +35,9 @@ class GameScene: SKScene {
         creatPlayer()
         
         physicsWorld.gravity = CGVector.zero
+        
+        motionManger = CMMotionManager()
+        motionManger.startAccelerometerUpdates()
     }
   
     //MARK: - Touches
@@ -64,10 +70,17 @@ class GameScene: SKScene {
     //MARK: - Game cycle
   
     override func update(currentTime: CFTimeInterval) {
-        if let currentTouch = lastTouchPostition {
-            let diff = currentTouch - player.position
-            physicsWorld.gravity = CGVector(point: diff/100)
-        }
+        #if (arch(i386) || arch(x86_64))
+            if let currentTouch = lastTouchPostition {
+                let diff = currentTouch - player.position
+                physicsWorld.gravity = CGVector(point: diff/100)
+            }
+        #else
+            if let accelerometerData = motionManger.accelerometerData {
+                physicsWorld.gravity = CGVector(dx: accelerometerData.acceleration.y * -50 , dy: accelerometerData.acceleration.x * 50)
+            }
+        
+        #endif
     }
     
     
